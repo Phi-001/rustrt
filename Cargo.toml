@@ -1,0 +1,19 @@
+[package]
+name = "rustrt"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+image = "0.23"
+wgpu = "0.9"
+pollster = "0.2"
+winit = "0.25"
+bytemuck = { version = "1.4", features = [ "derive" ] }
+anyhow = "1.0"
+chrono = "0.4"
+rand = { version = "0.8", features = [ "small_rng" ] }
+
+[profile.release]
+debug = true
