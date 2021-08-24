@@ -1,5 +1,7 @@
+use super::material::*;
 use super::ray::*;
 use super::vector::*;
+use super::Float;
 
 pub enum Facing {
     Front,
@@ -18,8 +20,9 @@ impl Default for Facing {
 pub struct Interaction {
     pub p: Point3,
     pub normal: Vector3,
-    pub t: f32,
+    pub t: Float,
     pub facing: Facing,
+    pub material: Option<&'static Material>,
 }
 
 impl Interaction {
@@ -44,7 +47,13 @@ pub enum Hittable {
 pub use Hittable::*;
 
 impl Hittable {
-    pub fn hit(&self, ray: &Ray, t_min: f32, t_max: f32, interaction: &mut Interaction) -> bool {
+    pub fn hit(
+        &self,
+        ray: &Ray,
+        t_min: Float,
+        t_max: Float,
+        interaction: &mut Interaction,
+    ) -> bool {
         match self {
             Sphere(sphere) => sphere.hit(ray, t_min, t_max, interaction),
         }
@@ -53,11 +62,18 @@ impl Hittable {
 
 pub struct Sphere {
     pub position: Vector3,
-    pub radius: f32,
+    pub radius: Float,
+    pub material: &'static Material,
 }
 
 impl Sphere {
-    pub fn hit(&self, ray: &Ray, t_min: f32, t_max: f32, interaction: &mut Interaction) -> bool {
+    pub fn hit(
+        &self,
+        ray: &Ray,
+        t_min: Float,
+        t_max: Float,
+        interaction: &mut Interaction,
+    ) -> bool {
         let oc = ray.origin - self.position;
         let a = ray.direction.length_squared();
         let half_b = Vector3::dot(&oc, &ray.direction);
@@ -67,7 +83,7 @@ impl Sphere {
         if discriminant < 0.0 {
             return false;
         }
-        let sqrt_d = f32::sqrt(discriminant);
+        let sqrt_d = Float::sqrt(discriminant);
 
         // Find the nearest root that lies in the acceptable range.
         let mut root = (-half_b - sqrt_d) / a;
@@ -82,6 +98,7 @@ impl Sphere {
         interaction.p = ray.at(interaction.t);
         let outward_normal = (interaction.p - self.position) / self.radius;
         interaction.set_face_normal(ray, &outward_normal);
+        interaction.material = Some(self.material);
 
         true
     }
@@ -97,7 +114,13 @@ impl HittableList {
         self.objects.push(object);
     }
 
-    pub fn hit(&self, ray: &Ray, t_min: f32, t_max: f32, interaction: &mut Interaction) -> bool {
+    pub fn hit(
+        &self,
+        ray: &Ray,
+        t_min: Float,
+        t_max: Float,
+        interaction: &mut Interaction,
+    ) -> bool {
         let mut temp_interaction = Interaction::default();
         let mut hit_anything = false;
         let mut closest_so_far = t_max;

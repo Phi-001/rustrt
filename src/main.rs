@@ -1,83 +1,76 @@
 #![warn(clippy::all)]
 #![warn(rust_2018_idioms)]
 
+#[macro_use]
+extern crate lazy_static;
+
+type Float = f32;
+
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 use std::io::{self, Write};
 use std::sync::mpsc;
-use std::sync::Arc;
 
 mod camera;
 mod hittable;
+mod material;
 mod ray;
+mod ray_color;
+mod scene;
 mod thread_pool;
 mod vector;
 
 use camera::Camera;
 use hittable::*;
 use ray::Ray;
+use ray_color::ray_color;
+use scene::*;
 use std::time::Instant;
 use thread_pool::ThreadPool;
 use vector::{Color3, Point3, Vector3};
 
-const ASPECT_RATIO: f32 = 16.0 / 9.0;
+const ASPECT_RATIO: Float = 16.0 / 9.0;
 const WIDTH: usize = 600;
-const HEIGHT: usize = (WIDTH as f32 / ASPECT_RATIO) as usize;
-const SAMPLES_PER_PIXEL: usize = 16;
-const NUM_CPU: usize = 4;
+const HEIGHT: usize = (WIDTH as Float / ASPECT_RATIO) as usize;
+const SAMPLES_PER_PIXEL: usize = 500;
+const NUM_CPU: usize = 2;
 const TILE_WIDTH: usize = 16;
 const TILE_HEIGHT: usize = 16;
+const MAX_DEPTH: usize = 50;
 
 fn main() {
     let earlier = Instant::now();
-
-    let mut world = HittableList::default();
-    world.add(Hittable::Sphere(Sphere {
-        position: Point3::new(0.0, 0.0, -1.0),
-        radius: 0.5,
-    }));
-    world.add(Hittable::Sphere(Sphere {
-        position: Point3::new(0.0, -100.4, -1.0),
-        radius: 100.0,
-    }));
-
-    let world = Arc::new(world);
-
-    let camera = Arc::new(Camera::new());
 
     let (tx, rx) = mpsc::channel();
 
     let mut thread_pool = ThreadPool::new(NUM_CPU, || {
         let tx = tx.clone();
-        let camera = Arc::clone(&camera);
-        let world = Arc::clone(&world);
         Box::new(move |mut tile: Tile| {
             let mut small_rng = SmallRng::from_entropy();
 
             let width = usize::min(TILE_WIDTH, WIDTH - tile.x);
             let height = usize::min(TILE_HEIGHT, HEIGHT - tile.y);
 
+            let scale = 1.0 / SAMPLES_PER_PIXEL as Float;
+
             for i in 0..width {
                 for j in 0..height {
+                    let mut pixel_color = Color3::default();
                     for _ in 0..SAMPLES_PER_PIXEL {
                         let x = tile.x + i;
                         let y = tile.y + j;
 
-                        let u = (x as f32 + small_rng.gen::<f32>()) / (WIDTH - 1) as f32;
-                        let v = (y as f32 + small_rng.gen::<f32>()) / (HEIGHT - 1) as f32;
-                        let ray = camera.get_ray(u, v);
+                        let u = (x as Float + small_rng.gen::<Float>()) / (WIDTH - 1) as Float;
+                        let v = (y as Float + small_rng.gen::<Float>()) / (HEIGHT - 1) as Float;
+                        let ray = CAMERA.get_ray(u, v, &mut small_rng);
 
-                        let pixel = ray_color(&ray, &world);
+                        let pixel = ray_color(&ray, &WORLD, &mut small_rng, MAX_DEPTH);
 
-                        tile.add(i, j, pixel);
+                        pixel_color += pixel;
                     }
+                    pixel_color *= scale;
+                    tile.set(i, j, pixel_color);
                 }
-            }
-
-            let scale = 1.0 / SAMPLES_PER_PIXEL as f32;
-
-            for ele in tile.buffer.iter_mut() {
-                *ele *= scale;
             }
 
             tx.send(tile).unwrap();
@@ -106,12 +99,20 @@ fn main() {
 
     let mut image = vec![0u8; WIDTH * HEIGHT * 4];
 
-    let mut remaining = (WIDTH / TILE_HEIGHT) * (HEIGHT / TILE_WIDTH);
+    let total_tiles = (WIDTH / TILE_HEIGHT) * (HEIGHT / TILE_WIDTH);
+    let mut remaining = total_tiles;
 
     for tile in rx {
         remaining -= 1;
-        print!("\r");
-        print!("{} tiles remaining...", remaining);
+        print!("{esc}[2J{esc}[1;1H", esc = 27 as char);
+        println!("{}/{} tiles remaining...", remaining, total_tiles);
+        println!(
+            "Estimated {} seconds remaining...",
+            ((Instant::now().duration_since(earlier).as_nanos() as f64)
+                / ((total_tiles - remaining) as f64))
+                * (remaining as f64)
+                / 1_000_000_000f64
+        );
 
         io::stdout().flush().unwrap();
 
@@ -164,7 +165,7 @@ fn index(i: usize, j: usize) -> usize {
 struct Tile {
     x: usize,
     y: usize,
-    buffer: Vec<f32>,
+    buffer: Vec<Float>,
 }
 
 impl Tile {
@@ -174,21 +175,11 @@ impl Tile {
     }
 
     #[inline]
-    pub fn add(&mut self, i: usize, j: usize, rgb: Color3) {
-        self.buffer[Tile::index(i, j)] += rgb[0];
-        self.buffer[Tile::index(i, j) + 1] += rgb[1];
-        self.buffer[Tile::index(i, j) + 2] += rgb[2];
-        self.buffer[Tile::index(i, j) + 3] += 1.0;
+    pub fn set(&mut self, i: usize, j: usize, rgb: Color3) {
+        // apply gamma correction
+        self.buffer[Tile::index(i, j)] = Float::sqrt(rgb[0]);
+        self.buffer[Tile::index(i, j) + 1] = Float::sqrt(rgb[1]);
+        self.buffer[Tile::index(i, j) + 2] = Float::sqrt(rgb[2]);
+        self.buffer[Tile::index(i, j) + 3] = 1.0;
     }
-}
-
-fn ray_color(ray: &Ray, world: &HittableList) -> Color3 {
-    let mut interaction = Interaction::default();
-    if world.hit(ray, 0.0, f32::INFINITY, &mut interaction) {
-        return 0.5 * (interaction.normal + Color3::new(1.0, 1.0, 1.0));
-    }
-
-    let unit_direction = Vector3::unit_vector(ray.direction);
-    let t = 0.5 * (unit_direction.y + 1.0);
-    (1.0 - t) * Color3::new(1.0, 1.0, 1.0) + t * Color3::new(0.5, 0.7, 1.0)
 }

@@ -8,6 +8,7 @@ edition = "2018"
 [dependencies]
 image = "0.23"
 rand = { version = "0.8", features = [ "small_rng" ] }
+lazy_static = "1.4.0"
 
 [profile.release]
 debug = true

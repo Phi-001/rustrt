@@ -1,5 +1,7 @@
 use super::vector::*;
+use super::Float;
 
+#[derive(Default)]
 pub struct Ray {
     pub origin: Point3,
     pub direction: Vector3,
@@ -7,7 +9,7 @@ pub struct Ray {
 
 impl Ray {
     #[inline]
-    pub fn at(&self, t: f32) -> Point3 {
+    pub fn at(&self, t: Float) -> Point3 {
         self.origin + self.direction * t
     }
 }
