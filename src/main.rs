@@ -24,7 +24,7 @@ const ASPECT_RATIO: f32 = 16.0 / 9.0;
 const WIDTH: usize = 600;
 const HEIGHT: usize = (WIDTH as f32 / ASPECT_RATIO) as usize;
 const SAMPLES_PER_PIXEL: usize = 16;
-const NUM_CPU: usize = 2;
+const NUM_CPU: usize = 4;
 const TILE_WIDTH: usize = 16;
 const TILE_HEIGHT: usize = 16;
 
