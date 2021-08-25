@@ -18,11 +18,11 @@ lazy_static! {
         Material::Diffuse(material)
     };
     static ref MATERIAL_LEFT: Material = {
-        let material = Dielectric {
-            index_of_refraction: 1.5,
+        let material = Diffuse {
+            albedo: Color3::new(0.1, 0.7, 0.2),
         };
 
-        Material::Dielectric(material)
+        Material::Diffuse(material)
     };
     static ref MATERIAL_RIGHT: Material = {
         let material = Metal {
@@ -73,26 +73,24 @@ lazy_static! {
         for (a, line) in pixels.iter().enumerate() {
             for (b, character) in line.iter().enumerate() {
                 let material = match character {
-                    'x' => 5,
-                    'y' => 1,
-                    'z' => 2,
-                    _ => 3,
+                    'x' => &*MATERIAL_LEFT,
+                    'y' => &*MATERIAL_CENTER,
+                    'z' => &*MATERIAL_RIGHT,
+                    _ => &MATERIAL_LIST[100],
                 };
                 let a = a as Float;
                 let b = b as Float;
                 let position = Vector3::new(
                     -a + 5.0,
-                    0.2,
+                    0.7,
                     b - 10.0,
                 );
 
-                if (position - Point3::new(4.0, 0.2, 0.0)).length() > 0.9 {
-                    world.add(Hittable::Sphere(Sphere {
-                        position,
-                        radius: 0.7,
-                        material: &MATERIAL_LIST[material],
-                    }));
-                }
+                world.add(Hittable::Sphere(Sphere {
+                    position,
+                    radius: 0.7,
+                    material,
+                }));
             }
         }
 
@@ -101,9 +99,9 @@ lazy_static! {
         world
     };
     pub static ref CAMERA: Camera = {
-        let look_from = Point3::new(-20.0, 40.0, 0.0);
-        let look_at = Point3::new(0.0, 0.0, 0.0);
-        let view_up = Vector3::unit_vector(Vector3::new(1.0, 1.0, 0.0));
+        let look_from = Point3::new(-25.0, 20.0, 35.0);
+        let look_at = Point3::new(5.0, 0.0, -5.0);
+        let view_up = Vector3::unit_vector(Vector3::new(0.0, 1.0, 0.0));
         let fov = 20.0;
         let dist_to_focus = (look_from - look_at).length();
         let aperture = 0.1;
