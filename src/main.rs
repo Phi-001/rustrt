@@ -31,7 +31,7 @@ use thread_pool::ThreadPool;
 use vector::{Color3, Point3, Vector3};
 
 const ASPECT_RATIO: Float = 16.0 / 9.0;
-const WIDTH: usize = 1920;
+const WIDTH: usize = 600;
 const HEIGHT: usize = (WIDTH as Float / ASPECT_RATIO) as usize;
 const SAMPLES_PER_PIXEL: usize = 500;
 const NUM_CPU: usize = 2;

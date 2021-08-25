@@ -56,8 +56,12 @@ lazy_static! {
         vec
     };
     pub static ref WORLD: HittableList = {
+        let image = String::from(include_str!("J19.txt"));
+        let pixels = image.lines().map(|line| {
+            line.chars().collect::<Vec<_>>()
+        }).collect::<Vec<_>>();
         let mut world = HittableList::default();
-        let mut rng = SmallRng::from_seed([123; 32]);
+        // let mut rng = SmallRng::from_seed([123; 32]);
         // let mut rng = SmallRng::from_entropy();
 
         world.add(Hittable::Sphere(Sphere {
@@ -66,55 +70,42 @@ lazy_static! {
             material: &MATERIAL_GROUND,
         }));
 
-        for a in -11..11 {
-            for b in -11..11 {
-                let material = ((a + 11) * 22 + (b + 11)) as usize;
+        for (a, line) in pixels.iter().enumerate() {
+            for (b, character) in line.iter().enumerate() {
+                let material = match character {
+                    'x' => 5,
+                    'y' => 1,
+                    'z' => 2,
+                    _ => 3,
+                };
                 let a = a as Float;
                 let b = b as Float;
                 let position = Vector3::new(
-                    a + 0.9 * rng.gen::<Float>(),
+                    -a + 5.0,
                     0.2,
-                    b + 0.9 * rng.gen::<Float>(),
+                    b - 10.0,
                 );
 
                 if (position - Point3::new(4.0, 0.2, 0.0)).length() > 0.9 {
                     world.add(Hittable::Sphere(Sphere {
                         position,
-                        radius: 0.2,
+                        radius: 0.7,
                         material: &MATERIAL_LIST[material],
                     }));
                 }
             }
         }
 
-        world.add(Hittable::Sphere(Sphere {
-            position: Point3::new(0.0, 1.0, 0.0),
-            radius: 1.0,
-            material: &MATERIAL_CENTER,
-        }));
-
-        world.add(Hittable::Sphere(Sphere {
-            position: Point3::new(-4.0, 1.0, 0.0),
-            radius: 1.0,
-            material: &MATERIAL_LEFT,
-        }));
-
-        world.add(Hittable::Sphere(Sphere {
-            position: Point3::new(4.0, 1.0, 0.0),
-            radius: 1.0,
-            material: &MATERIAL_RIGHT,
-        }));
-
         world.init();
 
         world
     };
     pub static ref CAMERA: Camera = {
-        let look_from = Point3::new(13.0, 2.0, 3.0);
+        let look_from = Point3::new(-20.0, 40.0, 0.0);
         let look_at = Point3::new(0.0, 0.0, 0.0);
-        let view_up = Vector3::new(0.0, 1.0, 0.0);
+        let view_up = Vector3::unit_vector(Vector3::new(1.0, 1.0, 0.0));
         let fov = 20.0;
-        let dist_to_focus = 10.0;
+        let dist_to_focus = (look_from - look_at).length();
         let aperture = 0.1;
 
         Camera::new(
