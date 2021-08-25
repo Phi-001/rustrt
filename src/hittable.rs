@@ -1,7 +1,12 @@
+use super::bounds::Bounds3;
 use super::material::*;
 use super::ray::*;
 use super::vector::*;
 use super::Float;
+
+mod bvh;
+
+pub use bvh::HittableList;
 
 pub enum Facing {
     Front,
@@ -40,6 +45,7 @@ impl Interaction {
     }
 }
 
+#[derive(Clone)]
 pub enum Hittable {
     Sphere(Sphere),
 }
@@ -58,8 +64,15 @@ impl Hittable {
             Sphere(sphere) => sphere.hit(ray, t_min, t_max, interaction),
         }
     }
+
+    pub fn bound(&self) -> Bounds3 {
+        match self {
+            Sphere(sphere) => sphere.bound(),
+        }
+    }
 }
 
+#[derive(Clone)]
 pub struct Sphere {
     pub position: Vector3,
     pub radius: Float,
@@ -102,38 +115,16 @@ impl Sphere {
 
         true
     }
-}
 
-#[derive(Default)]
-pub struct HittableList {
-    pub objects: Vec<Hittable>,
-}
-
-impl HittableList {
-    pub fn add(&mut self, object: Hittable) {
-        self.objects.push(object);
-    }
-
-    pub fn hit(
-        &self,
-        ray: &Ray,
-        t_min: Float,
-        t_max: Float,
-        interaction: &mut Interaction,
-    ) -> bool {
-        let mut temp_interaction = Interaction::default();
-        let mut hit_anything = false;
-        let mut closest_so_far = t_max;
-
-        for object in self.objects.iter() {
-            if object.hit(ray, t_min, closest_so_far, &mut temp_interaction) {
-                hit_anything = true;
-                closest_so_far = temp_interaction.t;
-            }
+    pub fn bound(&self) -> Bounds3 {
+        let radius = Vector3::new(
+            Float::abs(self.radius),
+            Float::abs(self.radius),
+            Float::abs(self.radius),
+        );
+        Bounds3 {
+            p_min: self.position - radius,
+            p_max: self.position + radius,
         }
-
-        *interaction = temp_interaction;
-
-        hit_anything
     }
 }

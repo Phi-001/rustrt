@@ -22,7 +22,7 @@ impl Camera {
         aperture: Float,
         focus_dist: Float,
     ) -> Self {
-        let theta = degrees_to_radians(fov);
+        let theta = fov.to_radians();
         let h = Float::tan(theta / 2.0);
         let viewport_height = 2.0 * h;
         let viewport_width = aspect_ratio * viewport_height;
@@ -67,8 +67,4 @@ fn random_in_unit_disk(rng: &mut SmallRng) -> Vector3 {
     let r = Float::sqrt(rng.gen());
     let theta = 2.0 * PI * rng.gen::<Float>();
     Vector3::new(r * Float::cos(theta), r * Float::sin(theta), 0.0)
-}
-
-fn degrees_to_radians(degrees: Float) -> Float {
-    degrees * (PI / 180.0)
 }

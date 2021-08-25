@@ -11,6 +11,7 @@ use rand::{Rng, SeedableRng};
 use std::io::{self, Write};
 use std::sync::mpsc;
 
+mod bounds;
 mod camera;
 mod hittable;
 mod material;
@@ -30,7 +31,7 @@ use thread_pool::ThreadPool;
 use vector::{Color3, Point3, Vector3};
 
 const ASPECT_RATIO: Float = 16.0 / 9.0;
-const WIDTH: usize = 600;
+const WIDTH: usize = 1920;
 const HEIGHT: usize = (WIDTH as Float / ASPECT_RATIO) as usize;
 const SAMPLES_PER_PIXEL: usize = 500;
 const NUM_CPU: usize = 2;
@@ -77,8 +78,16 @@ fn main() {
         })
     });
 
-    for i in 0..WIDTH / TILE_WIDTH {
-        for j in 0..HEIGHT / TILE_HEIGHT {
+    let div_up = |a, b| {
+        if a % b == 0 {
+            a / b
+        } else {
+            a / b + 1
+        }
+    };
+
+    for i in 0..div_up(WIDTH, TILE_WIDTH) {
+        for j in 0..div_up(HEIGHT, TILE_HEIGHT) {
             thread_pool.push_que(Tile {
                 x: i * TILE_WIDTH,
                 y: j * TILE_HEIGHT,
@@ -99,7 +108,7 @@ fn main() {
 
     let mut image = vec![0u8; WIDTH * HEIGHT * 4];
 
-    let total_tiles = (WIDTH / TILE_HEIGHT) * (HEIGHT / TILE_WIDTH);
+    let total_tiles = div_up(WIDTH, TILE_WIDTH) * div_up(HEIGHT, TILE_HEIGHT);
     let mut remaining = total_tiles;
 
     for tile in rx {

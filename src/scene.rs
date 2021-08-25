@@ -33,7 +33,8 @@ lazy_static! {
         Material::Metal(material)
     };
     static ref MATERIAL_LIST: Vec<Material> = {
-        let mut rng = SmallRng::from_entropy();
+        let mut rng = SmallRng::from_seed([126; 32]);
+        // let mut rng = SmallRng::from_entropy();
         let num_sphere = 22 * 22;
         let mut vec = Vec::with_capacity(num_sphere);
         for _ in 0..num_sphere {
@@ -56,7 +57,8 @@ lazy_static! {
     };
     pub static ref WORLD: HittableList = {
         let mut world = HittableList::default();
-        let mut rng = SmallRng::from_entropy();
+        let mut rng = SmallRng::from_seed([123; 32]);
+        // let mut rng = SmallRng::from_entropy();
 
         world.add(Hittable::Sphere(Sphere {
             position: Point3::new(0.0, -1000.0, 0.0),
@@ -102,6 +104,8 @@ lazy_static! {
             radius: 1.0,
             material: &MATERIAL_RIGHT,
         }));
+
+        world.init();
 
         world
     };
