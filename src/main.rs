@@ -19,6 +19,7 @@ mod ray;
 mod ray_color;
 mod scene;
 mod thread_pool;
+mod transforms;
 mod vector;
 
 use camera::Camera;
@@ -33,11 +34,15 @@ use vector::{Color3, Point3, Vector3};
 const ASPECT_RATIO: Float = 16.0 / 9.0;
 const WIDTH: usize = 1920;
 const HEIGHT: usize = (WIDTH as Float / ASPECT_RATIO) as usize;
-const SAMPLES_PER_PIXEL: usize = 500;
+const SAMPLES_PER_PIXEL: usize = 1024;
 const NUM_CPU: usize = 2;
 const TILE_WIDTH: usize = 16;
 const TILE_HEIGHT: usize = 16;
-const MAX_DEPTH: usize = 50;
+const MAX_DEPTH: usize = 16;
+
+const FRAC_PI_4: Float = std::f64::consts::FRAC_PI_4 as Float;
+const FRAC_PI_2: Float = std::f64::consts::FRAC_PI_2 as Float;
+const FRAC_1_PI: Float = std::f64::consts::FRAC_1_PI as Float;
 
 fn main() {
     let earlier = Instant::now();
@@ -67,8 +72,11 @@ fn main() {
 
                         let pixel = ray_color(&ray, &WORLD, &mut small_rng, MAX_DEPTH);
 
-                        pixel_color += pixel;
+                        if pixel.is_normal() {
+                            pixel_color += pixel;
+                        }
                     }
+
                     pixel_color *= scale;
                     tile.set(i, j, pixel_color);
                 }
@@ -161,8 +169,8 @@ fn main() {
         .unwrap();
 
     println!(
-        "Took {} milliseconds",
-        Instant::now().duration_since(earlier).as_nanos() as f64 / 1_000_000.0
+        "Took {} seconds",
+        Instant::now().duration_since(earlier).as_nanos() as f64 / 1_000_000_000.0
     )
 }
 

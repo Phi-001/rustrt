@@ -56,32 +56,20 @@ impl Bounds3 {
         t_max_in: Float,
         t_min_in: Float,
     ) -> bool {
-        let mut t_min = (self[dir_is_neg[0]].x - ray.origin.x) * inv_dir.x;
-        let mut t_max = (self[!dir_is_neg[0]].x - ray.origin.x) * inv_dir.x;
+        let t_min = (self[dir_is_neg[0]].x - ray.origin.x) * inv_dir.x;
+        let t_max = (self[!dir_is_neg[0]].x - ray.origin.x) * inv_dir.x;
         let ty_min = (self[dir_is_neg[1]].y - ray.origin.y) * inv_dir.y;
         let ty_max = (self[!dir_is_neg[1]].y - ray.origin.y) * inv_dir.y;
-        if t_min > ty_max || ty_min > t_max {
-            return false;
-        }
-        if ty_min > t_min {
-            t_min = ty_min;
-        }
-        if ty_max < t_max {
-            t_max = ty_max;
-        }
         let tz_min = (self[dir_is_neg[2]].z - ray.origin.z) * inv_dir.z;
         let tz_max = (self[!dir_is_neg[2]].z - ray.origin.z) * inv_dir.z;
-        if t_min > tz_max || tz_min > t_max {
-            return false;
-        }
-        if tz_min > t_min {
-            t_min = tz_min;
-        }
-        if tz_max < t_max {
-            t_max = tz_max;
-        }
 
-        (t_min < t_max_in) && (t_max > t_min_in)
+        let t_min = Float::max(t_min, ty_min);
+        let t_max = Float::min(t_max, ty_max);
+
+        let t_min = Float::max(t_min, tz_min);
+        let t_max = Float::min(t_max, tz_max);
+
+        (t_min <= t_max) && (t_min < t_max_in) && (t_max > t_min_in)
     }
 
     pub fn surface_area(&self) -> Float {

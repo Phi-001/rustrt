@@ -1,0 +1,26 @@
+Here's the rough plan for features
+
+Switch to monte carlo integration
+    - Change material to work with PDF
+        - Scatter function as well as reflectance function
+        - Handle specular with special case
+    - Make the ray_color function non recursive so it is easier to see in performance
+
+Add more shapes
+    - Add quads
+    - Add boxes which are made of quads
+    - Make use of the Transform class to be able to place it anywhere
+
+Add light
+    - This should also use PDF
+
+Add volumetric
+    - Simple fog would be fine
+    - Heterogenous volumes are for later
+
+Switch to bidirectional
+
+Implement a better sampler
+    - Poly jittered whatever
+
+Switch to MTL

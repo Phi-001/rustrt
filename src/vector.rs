@@ -46,8 +46,39 @@ impl Vector3 {
     }
 
     #[inline]
+    pub fn inverse(&self) -> Vector3 {
+        Vector3 {
+            x: 1.0 / self.x,
+            y: 1.0 / self.y,
+            z: 1.0 / self.z,
+        }
+    }
+
+    pub fn is_nan(&self) -> bool {
+        self.x.is_nan() || self.y.is_nan() || self.z.is_nan()
+    }
+
+    pub fn is_infinite(&self) -> bool {
+        self.x.is_infinite() || self.y.is_infinite() || self.z.is_infinite()
+    }
+
+    #[inline]
+    pub fn is_normal(&self) -> bool {
+        !self.is_nan() && !self.is_infinite()
+    }
+
+    #[inline]
     pub fn new(x: Float, y: Float, z: Float) -> Vector3 {
         Vector3 { x, y, z }
+    }
+
+    #[inline]
+    pub fn flip(v: &Vector3, n: &Vector3) -> Vector3 {
+        if Vector3::dot(v, n) > 0.0 {
+            *v
+        } else {
+            -*v
+        }
     }
 
     #[inline]
@@ -161,6 +192,13 @@ impl MulAssign<Float> for Vector3 {
     }
 }
 
+impl MulAssign<Vector3> for Vector3 {
+    #[inline]
+    fn mul_assign(&mut self, rhs: Vector3) {
+        *self = *self * rhs
+    }
+}
+
 impl DivAssign<Float> for Vector3 {
     #[inline]
     fn div_assign(&mut self, rhs: Float) {
@@ -221,6 +259,12 @@ impl Color3 {
             (256.0 * Float::clamp(g, 0.0, 0.999)) as u8,
             (256.0 * Float::clamp(b, 0.0, 0.999)) as u8,
         ]
+    }
+
+    #[inline]
+    pub fn luminance(&self) -> Float {
+        // https://stackoverflow.com/questions/596216/formula-to-determine-perceived-brightness-of-rgb-color
+        0.2126 * self[0] + 0.7152 * self[1] + 0.0722 * self[2]
     }
 }
 

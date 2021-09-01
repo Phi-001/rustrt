@@ -8,21 +8,21 @@ lazy_static! {
             albedo: Color3::new(0.8, 0.8, 0.0),
         };
 
-        Material::from(ReflectanceModel::Diffuse(material))
+        Material::Diffuse(material)
     };
     static ref MATERIAL_CENTER: Material = {
         let material = Diffuse {
             albedo: Color3::new(0.1, 0.2, 0.5),
         };
 
-        Material::from(ReflectanceModel::Diffuse(material))
+        Material::Diffuse(material)
     };
     static ref MATERIAL_LEFT: Material = {
         let material = Dielectric {
             index_of_refraction: 1.5,
         };
 
-        Material::from(ReflectanceModel::Dielectric(material))
+        Material::Dielectric(material)
     };
     static ref MATERIAL_RIGHT: Material = {
         let material = Metal {
@@ -30,7 +30,7 @@ lazy_static! {
             fuzziness: 0.0,
         };
 
-        Material::from(ReflectanceModel::Metal(material))
+        Material::Metal(material)
     };
     static ref MATERIAL_LIST: Vec<Material> = {
         let mut rng = SmallRng::from_seed([126; 32]);
@@ -42,15 +42,15 @@ lazy_static! {
 
             vec.push(if choose_mat < 0.8 {
                 let albedo = Color3::random(&mut rng) * Color3::random(&mut rng);
-                Material::from(ReflectanceModel::Diffuse(Diffuse { albedo }))
+                Material::Diffuse(Diffuse { albedo })
             } else if choose_mat < 0.95 {
                 let albedo = Color3::random(&mut rng) * 0.5 + Color3::new(0.5, 0.5, 0.5);
                 let fuzziness = rng.gen::<Float>() * 0.5;
-                Material::from(ReflectanceModel::Metal(Metal { albedo, fuzziness }))
+                Material::Metal(Metal { albedo, fuzziness })
             } else {
-                Material::from(ReflectanceModel::Dielectric(Dielectric {
+                Material::Dielectric(Dielectric {
                     index_of_refraction: 1.5,
-                }))
+                })
             });
         }
         vec

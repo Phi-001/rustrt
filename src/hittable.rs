@@ -8,41 +8,12 @@ mod bvh;
 
 pub use bvh::HittableList;
 
-pub enum Facing {
-    Front,
-    Back,
-}
-
-use Facing::*;
-
-impl Default for Facing {
-    fn default() -> Facing {
-        Front
-    }
-}
-
 #[derive(Default)]
 pub struct Interaction {
     pub p: Point3,
     pub normal: Vector3,
     pub t: Float,
-    pub facing: Facing,
     pub material: Option<&'static Material>,
-}
-
-impl Interaction {
-    #[inline]
-    pub fn set_face_normal(&mut self, ray: &Ray, outward_normal: &Vector3) {
-        if Vector3::dot(&ray.direction, outward_normal) < 0.0 {
-            self.facing = Front;
-        } else {
-            self.facing = Back;
-        }
-        self.normal = match self.facing {
-            Front => *outward_normal,
-            Back => -*outward_normal,
-        }
-    }
 }
 
 #[derive(Clone)]
@@ -109,8 +80,7 @@ impl Sphere {
 
         interaction.t = root;
         interaction.p = ray.at(interaction.t);
-        let outward_normal = (interaction.p - self.position) / self.radius;
-        interaction.set_face_normal(ray, &outward_normal);
+        interaction.normal = (interaction.p - self.position) / self.radius;
         interaction.material = Some(self.material);
 
         true

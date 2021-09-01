@@ -1,7 +1,7 @@
 use super::vector::*;
 use super::Float;
 
-#[derive(Default)]
+#[derive(Default, Clone, Copy)]
 pub struct Ray {
     pub origin: Point3,
     pub direction: Vector3,
